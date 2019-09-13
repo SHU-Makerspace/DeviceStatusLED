@@ -1,0 +1,27 @@
+#!/bin/bash
+
+###########################################################################
+#
+#	-Bash script to move/edit files:
+#		+Sets device_id number in DeviceStatusLED.py
+#		+Creates and starts service for running DeviceStatusLED.py
+#
+###########################################################################
+
+# set device ID in script
+read -p 'Please enter the device number' device_id
+sed -i -e "s/DEVICE_ID = \"21\"/DEVICE_ID = \"$device_id\"/g" ./test.py
+
+# setup service
+if echo 'Device Status LED service:' \
+	&& sudo cp ./DeviceStatusLED.service /etc/systemd/system/ \
+	&& echo -e '\tSuccessfully moved' \
+	&& sudo systemctl enable DeviceStatusLED.service \
+	&& echo -e '\tSuccessfully enabled' \
+	&& sudo systemctl start DeviceStatusLED.service \
+	&& echo -e '\tSuccessfully started';
+then
+	echo -e '\033[0;42mSuccessfully created Device Status LED service\033[0;49m'
+else
+	echo -e '\033[0;31m***FAILED TO CREATE DEVICE STATUS SERVICE***\033[0;39m'
+fi

@@ -1,0 +1,15 @@
+[Unit]
+Description=Display notification light for specified device in FabApp
+After=mysql.service
+
+[Service]
+ExecStart=/usr/bin/python3 /home/pi/DeviceStatusLED/DeviceStatusLED.py
+Restart=always
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=LEDNotification
+User=pi
+Group=pi
+
+[Install]
+WantedBy=multi-user.target
