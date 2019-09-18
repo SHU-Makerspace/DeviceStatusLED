@@ -9,19 +9,35 @@
 ###########################################################################
 
 # set device ID in script
-read -p 'Please enter the device number' device_id
-sed -i -e "s/DEVICE_ID = \"21\"/DEVICE_ID = \"$device_id\"/g" ./test.py
+read -p 'Please enter the device number: ' device_id
+sed -i -e "s/DEVICE_ID = \"21\"/DEVICE_ID = \"$device_id\"/g" ./DeviceStatusLED.py
+read -p 'Please enter your API key: ' api_key
+sed -i -e "s/API_KEY = \"\"/API_KEY = \"$api_key\"/g" ./DeviceStatusLED.py
+
+if [ ! -d "/path/to/dir" ] 
+then
+	mkdir /pi/home/DeviceStatusLED
+fi
+
+if cp ./DeviceStatusLED.py /pi/home/DeviceStatusLED/DeviceStatusLED.py 
+then
+	echo '033[0;42mMoved python script to /pi/home/DeviceStatusLED/\033[0;49m'
+else
+	echo '\033[0;31m***FAILED TO MOVE FILE TO /pi/home/DeviceStatusLED***\033[0;39m'
+	echo 'The service will not work properly without the file being in this location or service path change'
+fi
+
 
 # setup service
 if echo 'Device Status LED service:' \
 	&& sudo cp ./DeviceStatusLED.service /etc/systemd/system/ \
-	&& echo -e '\tSuccessfully moved' \
+	&& echo '\tSuccessfully moved' \
 	&& sudo systemctl enable DeviceStatusLED.service \
-	&& echo -e '\tSuccessfully enabled' \
+	&& echo '\tSuccessfully enabled' \
 	&& sudo systemctl start DeviceStatusLED.service \
-	&& echo -e '\tSuccessfully started';
+	&& echo '\tSuccessfully started';
 then
-	echo -e '\033[0;42mSuccessfully created Device Status LED service\033[0;49m'
+	echo '\033[0;42mSuccessfully created Device Status LED service\033[0;49m'
 else
-	echo -e '\033[0;31m***FAILED TO CREATE DEVICE STATUS SERVICE***\033[0;39m'
+	echo '\033[0;31m***FAILED TO CREATE DEVICE STATUS SERVICE***\033[0;39m'
 fi
