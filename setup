@@ -19,6 +19,16 @@ then
 	mkdir /pi/home/DeviceStatusLED
 fi
 
+# GPIO control for python
+if sudo apt-get install -y python3-pip \
+	&& pip3 install RPi.GPIO;
+then
+	echo '\033[0;42mSuccessfully installed python dependencies\033[0;49m'
+else
+	echo '\033[0;31m***FAILED TO CREATE PYTHON DEPENDENCIES***\033[0;39m'
+fi
+
+
 if cp ./DeviceStatusLED.py /pi/home/DeviceStatusLED/DeviceStatusLED.py 
 then
 	echo '033[0;42mMoved python script to /pi/home/DeviceStatusLED/\033[0;49m'

@@ -25,22 +25,30 @@ import requests  # make post request
 from time import sleep  # used to suspend process
 
 # ———— SQL ———–
-FLUD_API = "~/api/flud.php"  #EDIT: edit for makerspace API URL
+FLUD_API = "https://~/api/flud.php"  #EDIT: edit for makerspace API URL
 DEVICE_ID = "21"  #EDIT: UTA poly-printers start at 21
 API_KEY = ""  #EDIT: DB site_variable API_KEY value
 
+# — POWER FLOW ——
+# set flow of electricity in relation to LED type.  Anode LED requires 3.3V in, GPIO out while 
+# cathodes require GPIO in, GND out
+CATHODE = False  #EDIT: LED type used for setting high/low
+ON = CATHODE
+OFF = not ON
+
+
+
 # ——— COLOR ———
 # service
-RED = [255, 0, 0]  # broken
-YELLOW = [255, 255, 0]  # issue
+RED = [ON, OFF, OFF]  # broken
+YELLOW = [ON, ON, OFF]  # connection issue or minor issue
 # print
-GREEN = [0, 255, 0]  # free
-BLUE = [0, 0, 255]  # moveable
-PURPLE = [155, 0, 155]  # active
+GREEN = [OFF, ON, OFF]  # free
+BLUE = [OFF, OFF, ON]  # moveable
+PURPLE = [ON, OFF, ON]  # active
 # other
-BLACK = [0, 0, 0]
-OFF = [0, 0, 0]
-WHITE = [255, 255, 255]
+BLACK = [OFF, OFF, OFF]
+WHITE = [ON, ON, ON]
 
 # ——— GPIO ————
 PINS = [11, 13, 15]  # [R, G, B]
@@ -55,25 +63,25 @@ def query_printer_status():
 		request = requests.post(FLUD_API, headers=header, json=request_package).json()
 
 		if "ERROR" in request:
-			return write_to_error_log(request["ERROR"])
+			return write_to_error_log("query_printer_status()::response: ", request["ERROR"])
 		return request
 
-	except:
-		return write_to_error_log("cannot get printer status")
+	except Exception as error:
+		return write_to_error_log("query_printer_status(): ", error)
 
 
 # determine color for status of printer (service has color priority, then ticket)
 def color_for_status(response):
 	try:
-		print(response)  #TESTING
+		# print(response)  #TESTING
 		if(response["service_issue"] and 7 < response["service_issue"]): return RED
 		# elif(response["service_issue"]): return YELLOW  #FUTURE: known issue, but usable
 
-		statuses = {"active": PURPLE, "moveable": BLUE}
+		statuses = {"active": BLUE, "moveable": PURPLE}
 		return statuses[response["transaction_state"]] if response["transaction_state"] in statuses else GREEN
 
-	except:
-		return write_to_error_log("cannot get color status")
+	except Exception as error:
+		return write_to_error_log("color_for_status(): ", error)
 
 
 # set the color of a RGB LED with GPIO
@@ -90,14 +98,14 @@ def set_light_state(color):
 		for x in range(3):
 			gpio.output(PINS[x], color[x])
 
-	except:
-		write_to_error_log("cannot set state of LED")
+	except Exception as error:
+		write_to_error_log("set_light_state(): ", error)
 
 
 # if exception occurs, this function is called to document issue & return None
-def write_to_error_log(error_message):
+def write_to_error_log(function, error):
 	with open("LED_error_log.txt", "a") as error_log:
-		error_log.write("ERROR: " + error_message + ", " + str(datetime.now()) + "\n")
+		error_log.write("ERROR: " + str(error) + ", " + str(datetime.now()) + "\n")
 	return None  # no valid value
 
 
@@ -106,13 +114,13 @@ def main():
 	while(True):
 		try:
 			flud_response = query_printer_status()
-			color = color_for_status(flud_response) if flud_response else None
-			print(color)  #TESTING
+			color = color_for_status(flud_response) if flud_response else YELLOW
+			# print(color)  #TESTING
 			if(color): set_light_state(color)
 			sleep(5)
 
-		except:
-			write_to_error_log("main loop error")
+		except Exception as error:
+			write_to_error_log("MAIN: ", error)
 
 if __name__ == '__main__':
 	main()
